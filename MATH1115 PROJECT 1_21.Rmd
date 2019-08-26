@@ -1,0 +1,88 @@
+---
+title: "MATH1115 PROJECT 1- NCHS" 
+#Wednesday/1pm/Carslaw 752 Computer Lab 
+author: 460324384, 
+date: "20/08/2019"
+output: html_document
+---
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+# Center for Disease control and Intervention
+#Executive Summary 
+# The survey highlights many key "lifestyle" statistics of a large population size. The survey covered areas such as diabetes, smoking, BMI, cholesterol levels and height. Allowing us to see trends between some of these factors and the difference between sexes. 
+#- Of note; older populations were more likely to smoke amongst males and females 
+
+
+# IDA
+https://www.cdc.gov/nchs/index.htm  #Raw Survey data of over 31k Individual typically referring to lifestyle 
+# Govt. data so reliability would be high, perhaps some validiity issues due to lifestyle surveys being susceptible to exxageration/underreporting 
+# Counted by the large sample size (should increase reliability)
+getwd() #already set to Desktop no need to change 
+nchsoriginal<-read.csv("nchs.csv")
+nchs
+dim(nchs)
+#31 Variables 
+str(nchs)
+head(nchs)  # to see first view columns of large data sets 
+# Determing names of all columns present
+colnames(nchs)
+#Stakeholders 
+# Lifestyle data is important to policy makers and industry as it provides insights on what people are eating/ how they  live their lives
+# The use of such data provides an insight into the future works of medical professional and researcher who may wish to rpevent disease associated with lifestyle 
+
+# Exploring Data 
+#1) Looking at the relationship between smoker status and age of participants, Do habits change as we age? Once adictted can we cease?
+# Use ggplot
+library(ggplot2)
+mean<-aggregate(age~smoker,nchs,mean) #Ask how to get mean( maybe need to change factor)
+nchs = subset(nchsoriginal,smoker=='yes'|smoker=='no')
+ggplot(nchs,aes(smoker, age, colour = sex)) + geom_boxplot() +xlab("Smoker Status") + ylab("Ages in Years") + ggtitle("Smoker Status amongst Population") + theme(panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+  
+# smoker status is descrete variable (coders note to self)
+# Younger males less likely to smoke than females however in older pop(post health campaigns it is more level), note a lot of NA( perhaps due to age or not willing to fill out survey honestly)- may smoke casually and not consider themselve a "smoker"- casual was not a survey option. Most lifelong smokers began <25 years old. 
+
+#Research File; https://www1.health.gov.au/internet/publications/publishing.nsf/Content/tobacco-control-toc~smoking-rates
+# This suggests that smoking rate prior to 1990 was significantly higher than more recently
+
+#2) Cholesterol(hdl) and BMI; relationship between the pair and the relationship between sexes? 
+
+ggplot(nchs, aes(bmi,hdl, colour= sex)) + geom_point() + xlab ("Body Mass index (Kg/M^2)") + ylab("HDL cholesterol (mg/dL)") + ggtitle ("HDL Cholesterol and BMI") + theme(panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),plot.background=element_rect(fill = "gray"),
+  panel.background = element_rect(fill = 'black'),)
+  
+# HDL is the "good" cholesterol and as a result is more prevalent in healthier individual usually  expected to have a BMI of  between 19-30 for a "healthy" range. 
+# The vast majority of respondents (mainly those in bottom left quadrant) have what is typically a healthy HDL (~60 mg/dL) and BMI range espcially in the male population.
+# The female population may have what appears to be higher BMIs and HDL cholesterol range suggesting that they may be more protected against heart disease than males at the same BMI.
+#Research Article: 
+
+#3) Correlation between health outcomes and income. Is there a correlation between BMI and smoker status and one's income?
+
+```{r}
+library(tidyverse)
+nchsprop = nchs %>% filter(bmi < 80) %>% na.omit()
+
+nchsd <- nchs %>% select(ethnicity, diabetic) %>% table %>% as.data.frame.matrix
+nchsd$Total <- rowSums(nchsd)
+nchsd$Prop <- nchsd$'1'/nchsd$Total
+nchsd$Enthnicity <- row.names(nchsd)
+
+nchsd
+
+nchs %>% select(ethnicity, diabetic) %>% group_by(ethnicity) %>% summarise()
+ggplot(nchsd, aes(x = Enthnicity,y=Prop)) + geom_bar(stat="identity")
+
+```
+
+#4 Correlation between body fat percentage and income.
+
+```{r}
+ggplot(nchs,aes(x =income,y=bmi)) + geom_smooth(model=lm)
+
+```
