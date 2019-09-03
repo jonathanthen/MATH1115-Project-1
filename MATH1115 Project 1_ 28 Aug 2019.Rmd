@@ -1,0 +1,175 @@
+---
+title: "MATH1115 PROJECT 1 \n National Centre for Health Statistics (NCHS)"
+
+author: "Paul Sevastos (460324384), Patrick Conroy (460385857), Jonathan Then (490605077)"
+date: "Wednesday / 1PM / Carslaw 705-706 Computer Lab"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    
+---
+
+# Center for Disease Control and Intervention
+
+## Executive Summary
+
+The survey data was collected by the US National Center for Health Statistics (NCHS). Each year, approximately 5,000 individuals are interviewed in their homes. The data covers 1999-2004 and highlights many key "lifestyle" statistics of a large population size. The survey covered areas such as diabetes, smoking, BMI, cholesterol levels and height. Hence, allowing us to see trends between some of these factors and the difference between sexes. Of note; older populations were more likely to smoke amongst males and females.
+
+## IDA
+
+*Source Data:* https://www.cdc.gov/nchs/index.htm
+
+The raw survey collected by the U.S. government included a large sample size of over 31,000 individuals. Therefore, the dataset is reliable with some validity issues due to lifestyle surveys being susceptible to exaggeration or underreporting.
+
+*Stakeholders:*
+
+Government - Lifestyle data is important to policy makers and industry as it provides insights on what people are eating or how they live their lives.
+
+Doctors - The use of such data provides an insight into the future works of medical professional and researcher who may wish to prevent diseases associated with that lifestyle.
+
+*Complexity of Data & Classification of Variables:*
+```{r, results="hide"}
+nchsoriginal <- read.csv("nchs.csv")
+
+dim(nchsoriginal)
+#To see how big our dataset is, 31126 obs & 31 var.
+
+str(nchsoriginal)
+#To view the structure of our dataset.
+
+head(nchsoriginal)
+#To view the first few columns of large data sets.
+
+colnames(nchsoriginal)
+#To determine names of all the variables.
+```
+
+<br>
+
+## Exploring Data
+
+**1) By looking at the relationship between the smoker status (i.e. Smoker or Non-Smoker) and the age of participants, we wanted to find out if habits change as we age? Once addicted, is it possible to cease?**
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+
+mean1 <- aggregate(age~smoker, nchsoriginal, mean)
+# Ask how to get mean (May need to change to Factor)
+
+nchs = subset(nchsoriginal,smoker=='yes'|smoker=='no')
+
+ggplot(nchs,aes(smoker, age, colour = sex)) +
+geom_boxplot() +
+xlab("Smoker Status") + 
+ylab("Age (years)") +
+ggtitle("Smoker Status amongst Population") +
+theme(panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(), 
+  axis.line = element_line(colour = "black")) +
+scale_x_discrete(labels=c("no" = "No", "yes" = "Yes")) +
+theme(plot.title = element_text(size = 12, face = "bold")) +
+scale_fill_discrete(name = c("sex" = "Sex"), labels = c("Female", "Male"))
+```
+
+Observation 1: Younger males are less likely to smoke than their female counterparts.
+
+Observation 2: The smokers are usually the older generation. This could be due to the younger people being more educated on the harmful effects of smoking and law restrictions.
+
+Observation 3: Take note that there was a lot of NA - perhaps due to age or not willing to fill out survey honestly. They may smoke casually and not consider themselves a "smoker". Casual smoking was not a survey option.
+
+Research File: https://www1.health.gov.au/internet/publications/publishing.nsf/Content/tobacco-control-toc~smoking-rates
+
+This suggests that smoking rates prior to 1990 were higher than 1999-2004.
+
+<br>
+
+**2) Is there a relationship between HDL Cholesterol and BMI? Is there a difference between gender?**
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(nchs, aes(bmi, hdl, colour = sex)) +
+geom_point() +
+xlab("Body Mass Index (Kg/m^2)") +
+ylab("HDL Cholesterol (mg/dL)") +
+ggtitle ("HDL Cholesterol and BMI") +
+theme(plot.title = element_text(size = 12, face = "bold")) +
+theme(panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank(), 
+      plot.background = element_rect(),
+      panel.background = element_rect(fill = 'black'))
+```
+
+Observation 1: HDL is the "good" cholesterol and as a result is more prevalent in healthier individuals. The healthy BMI range is  between 19-30.
+
+The vast majority of respondents (mainly those in bottom left quadrant) have what is typically a healthy HDL (~60 mg/dL) and BMI range, espcially in the male population.
+
+Observation 2: The female population may have what appears to be higher BMI and HDL cholesterol range. This suggesting that they may be more protected against heart disease than males at the same BMI.
+
+<br>
+
+**3) Is ethnicity a factor of getting diabetes?**
+```{r, include=FALSE}
+
+nchsprop = nchs %>% 
+filter(bmi < 80) %>%
+na.omit()
+
+nchsd <- nchs %>%
+select(ethnicity, diabetic) %>%
+table %>%
+as.data.frame.matrix
+
+nchsd$Total <- rowSums(nchsd)
+nchsd$Prop <- nchsd$'1'/nchsd$Total
+nchsd$Ethnicity <- row.names(nchsd)
+
+nchs %>% select(ethnicity, diabetic) %>%
+group_by(ethnicity) %>%
+summarise()
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(nchsd, aes(x = Ethnicity, y = Prop)) + geom_bar(stat="identity", colour = 'black', fill = "#EFDECD") +
+ggtitle("Proportion of Diabetic People based on Ethnicity") + theme(plot.title = element_text(size = 12, face = "bold")) + ylab("Proportion") +
+xlab(" ") +
+theme(axis.text.x = element_text(size = 8, face = 'bold', vjust=1, lineheight=1, colour = "darkblue"),
+axis.text.y = element_text(size = 8, vjust=1, lineheight=1, colour = "black"),
+plot.background = element_rect(),
+panel.background = element_rect(fill = '#F0F8FF'),
+axis.title.y = element_text(vjust = 4)) +
+scale_x_discrete(labels = c('Mexican\nAmerican','Non-Hispanic\n Black','Non-Hispanic\n White','Other Hispanic', 'Other/Multi'))
+```
+
+Observation: The proportion of people who have diabetes is constant throughout the different ethnicities. This suggests that among the listed ethnicities, one isn't more susceptible to diabetes than others.
+
+Research File:
+https://www.ajpmonline.org/article/S0749-3797(18)31908-1/fulltext
+https://www.cdc.gov/diabetes/pdfs/data/statistics/national-diabetes-statistics-report.pdf
+
+The report shows that there is a difference in the prevalence of diagnosed diabetes by race and ethnicity. Mainly, hispanics and non-hispanic blacks have higher diabetes rates than non hispanic whites.
+
+<br>
+
+**4) Wealth is said to be a effective predictor of Body Mass Index (BMI). Is there a correlation between BMI and income?**
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(nchs,aes(x = income, y = bmi)) +
+geom_smooth(model=lm, colour = "black") +
+ggtitle("BMI vs Income to Poverty Threshold") +
+theme(plot.title = element_text(size = 12, face = "bold", colour = "#000066")) +
+xlab("Income Ratio to Poverty Threshold") +
+ylab("BMI") +
+theme(axis.title.x = element_text(vjust = -2), 
+axis.title.y = element_text(vjust = 4)) +
+theme(panel.background = element_rect(fill = "#FFEEE6"))
+```
+
+Observation: The BMI increases as the income ratio to poverty threshold increases.
+
+Research File:
+https://bmjopen.bmj.com/content/8/1/e019862
+http://ftp.iza.org/dp5366.pdf
+
+The research articles concludes that the lower income groups have higher rates of obesity. Therefore, it goes against our observation where BMI increases as the income ratio to poverty threshold increases.
